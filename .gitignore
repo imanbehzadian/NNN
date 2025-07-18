@@ -1,0 +1,24 @@
+# Byte‑compiled & optimized
+__pycache__/
+*.py[cod]
+*.class
+
+# Virtual environments
+.env/
+venv/
+ENV/
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Pickle files
+*.pkl

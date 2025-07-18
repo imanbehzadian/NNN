@@ -1,0 +1,20 @@
+# dashboard & serialization
+streamlit==1.47.0
+
+# data handling & plotting
+pandas>=2.0
+numpy>=1.20
+IPython==7.34.0
+matplotlib>=3.0
+
+# basic ML utilities
+scikit-learn>=1.0
+
+# PyTorch & Transformers
+torch>=2.0.0
+transformers>=4.0.0
+
+# model explainability
+captum>=0.8.0
+
+
