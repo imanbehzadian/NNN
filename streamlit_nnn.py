@@ -28,7 +28,16 @@ from IPython.display import HTML, display
 
 # For Dashboarding
 import streamlit as st
-from datetime import date, timedelta, time
+from datetime import date, timedelta, time as dt_time
+import time
+
+
+import sys
+import NNN_modules as nnn_minimal    # your new module with NNNModel & GeoTimeSeriesDataset
+sys.modules['main'] = nnn_minimal  # tell the un‑pickler where to find “main.GeoTimeSeriesDataset”, etc.
+sys.modules['nnn_for_mmm_with_scenario_simulator'] = nnn_minimal
+
+
 
 
 # --- Authentication ---
@@ -125,13 +134,13 @@ elif page == "Data & Model Info":
             file_name = "NNN_vars_3.pkl"
             device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
             try:
-                # load everything (not just weights)
+                # now torch.load can resolve your custom classes via sys.modules['main']
                 workspace = torch.load(
                     file_name,
                     map_location=device,
                     weights_only=False
                 )
-                # inject each var back into globals()
+                # inject each saved var back into globals()
                 for name, obj in workspace.items():
                     globals()[name] = obj
                 st.session_state.model_obj = workspace.get('model_obj')
@@ -161,68 +170,113 @@ elif page == "Data & Model Info":
         st.subheader("Data Preview")
         st.dataframe(df.head())
 
+
+
 elif page == "Training Status":
     st.header("Training Status")
-    action_cols = st.columns([1,1])
+
+    # Track if user has loaded results this session
+    if 'load_results_done' not in st.session_state:
+        st.session_state.load_results_done = False
+
+    # --- Action buttons ---
+    action_cols = st.columns([1, 1])
     with action_cols[0]:
         start_training = st.button("Start Training", key='start_training')
     with action_cols[1]:
         load_button = st.button(
             "Load Results", key='load_results_button',
-            help="Load a dill file (.pkl) of an already trained model to skip training."
+            help="Load a .pkl of an already trained model to skip training."
         )
         if load_button:
             uploaded_pkl = st.file_uploader(
                 "Select .pkl to load", type=["pkl"], key="load_results_file"
             )
             if uploaded_pkl is not None:
-                st.session_state.model_obj = dim.loads(uploaded_pkl.read())
+                # Load workspace dict via torch
+                buf = io.BytesIO(uploaded_pkl.read())
+                device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+                workspace = torch.load(buf, map_location=device, weights_only=False)
+                # Inject variables into globals
+                for name, obj in workspace.items():
+                    globals()[name] = obj
+                # Pick up the model object
+                st.session_state.model_obj = workspace.get('model') or workspace.get('model_obj')
+                st.session_state.load_results_done = True
                 st.success("✅ Results loaded into session")
 
-    # If a pretrained model is loaded, skip training
-    if st.session_state.get('model_obj') is not None:
-        st.success("✅ Pretrained model is ready")
-    else:
-        steps = ["Loading data", "Preprocessing Data", "Create Embeddings", "Fitting neural network"]
-        errors = [
-            "Epoch 050 | Sales RMSE: 0.10, MAE: 0.08, R²: 0.829 | Search RMSE: 0.4, MAE: 0.4, R²: -7.956",
-            "Epoch 100 | Sales RMSE: 0.08, MAE: 0.06, R²: 0.896 | Search RMSE: 0.4, MAE: 0.4, R²: -5.325",
-            "Epoch 150 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.910 | Search RMSE: 0.3, MAE: 0.3, R²: -3.319",
-            "Epoch 200 | Sales RMSE: 0.08, MAE: 0.06, R²: 0.907 | Search RMSE: 0.3, MAE: 0.3, R²: -2.681",
-            "Epoch 250 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.908 | Search RMSE: 0.2, MAE: 0.2, R²: -1.483",
-            "Epoch 300 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.913 | Search RMSE: 0.4, MAE: 0.4, R²: -5.609",
-            "Epoch 350 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.915 | Search RMSE: 0.3, MAE: 0.3, R²: -4.356",
-            "Epoch 400 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.917 | Search RMSE: 0.1, MAE: 0.1, R²: 0.171",
-            "Epoch 450 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.917 | Search RMSE: 0.3, MAE: 0.3, R²: -2.411",
-            "Epoch 500 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.917 | Search RMSE: 0.2, MAE: 0.2, R²: -1.104",
-        ]
-        step_ph = [st.empty() for _ in steps]
-        error_ph = [st.empty() for _ in errors]
+    # # If we have a pretrained model, skip training UI
+    # if st.session_state.get('model_obj') is not None:
+    #     st.success("✅ Pretrained model is ready")
+    #     return  # or just skip the training section
 
-        def render_steps(done_idx=None):
-            for i, step in enumerate(steps):
-                icon = "✅" if done_idx is not None and i <= done_idx else "⚪"
-                step_ph[i].markdown(f"{icon}  {step}")
+    # --- Simulated training UI ---
+    steps = ["Loading data", "Preprocessing Data", "Create Embeddings", "Fitting neural network"]
+    errors = [
+        "Epoch 050 | Sales RMSE: 0.10, MAE: 0.08, R²: 0.829 | Search RMSE: 0.4, MAE: 0.4, R²: -7.956",
+        "Epoch 100 | Sales RMSE: 0.08, MAE: 0.06, R²: 0.896 | Search RMSE: 0.4, MAE: 0.4, R²: -5.325",
+        "Epoch 150 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.910 | Search RMSE: 0.3, MAE: 0.3, R²: -3.319",
+        "Epoch 200 | Sales RMSE: 0.08, MAE: 0.06, R²: 0.907 | Search RMSE: 0.3, MAE: 0.3, R²: -2.681",
+        "Epoch 250 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.908 | Search RMSE: 0.2, MAE: 0.2, R²: -1.483",
+        "Epoch 300 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.913 | Search RMSE: 0.4, MAE: 0.4, R²: -5.609",
+        "Epoch 350 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.915 | Search RMSE: 0.3, MAE: 0.3, R²: -4.356",
+        "Epoch 400 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.917 | Search RMSE: 0.1, MAE: 0.1, R²: 0.171",
+        "Epoch 450 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.917 | Search RMSE: 0.3, MAE: 0.3, R²: -2.411",
+        "Epoch 500 | Sales RMSE: 0.07, MAE: 0.06, R²: 0.917 | Search RMSE: 0.2, MAE: 0.2, R²: -1.104",
+    ]
+    step_ph = [st.empty() for _ in steps]
+    error_ph = [st.empty() for _ in errors]
 
-        def render_errors():
-            for j, err in enumerate(errors):
-                error_ph[j].text(err)
-                time.sleep(0.5)
+    def render_steps(done_idx):
+        for i, s in enumerate(steps):
+            icon = "✅" if i <= done_idx else "⚪"
+            step_ph[i].markdown(f"{icon} {s}")
 
-        if start_training:
-            for i in range(len(steps)-1):
-                render_steps(i)
-                time.sleep(1)
-            render_errors()
-            render_steps(len(steps)-1)
-            st.success("✅ Model is ready")
-            buf = dim.dumps(st.session_state.model_obj)
-            st.download_button(
-                "Save Results",
-                data=buf,
-                file_name="NNN_vars_3.pkl",
-                mime="application/octet-stream"
-            )
+    def render_errors():
+        for ph, msg in zip(error_ph, errors):
+            ph.text(msg)
+            time.sleep(0.5)
+
+    if start_training:
+        for i in range(len(steps)):
+            render_steps(i)
+            time.sleep(1)
+        render_errors()
+        render_steps(len(steps) - 1)
+        st.success("✅ Model is ready")
+
+
+        # Only show Save Results if training (not sim data) and not already loaded
+        if (not st.session_state.get('use_simulated', False)
+            and not st.session_state.load_results_done):
+            if st.button("Save Results", key="save_results_button"):
+                import io
+                import pickle
+
+                picklable = []
+                to_save = globals()   #TODO to narrow down the list of saved variables change this line
+                for name in to_save:
+                    if name in globals():
+                        try:
+                            pickle.dumps(globals()[name])
+                            picklable.append(name)
+                        except Exception:
+                            pass
+
+                # Build workspace dict and serialize via torch
+                workspace = {n: globals()[n] for n in picklable}
+                buf = io.BytesIO()
+                torch.save(workspace, buf)
+                buf.seek(0)
+
+                st.download_button(
+                    "Download NNN_vars_3.pkl",
+                    data=buf.getvalue(),
+                    file_name="NNN_vars_3.pkl",
+                    mime="application/octet-stream",
+                    key="download_results_button"
+                )
+     
 
 elif page == "Model Performance":
     st.header("Model Performance")

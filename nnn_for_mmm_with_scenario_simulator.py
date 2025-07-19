@@ -892,7 +892,7 @@ print(df_geo2_week10)
 # e.g. double TVCM, 1.2× YouTube, half Taxi, 0.8× Display
 muls = [2.0, 1.2, 0.5, 0.8]
 
-All-geos scenario
+#All-geos scenario
 df_all = scenario_planner_per_channel(model, X, muls, geo_idx=None)
 print(df_all)
 
@@ -1063,7 +1063,7 @@ plt.show()
 
 """# Actionable Insights on Creative Pieces"""
 
-!pip install captum
+#!pip install captum
 
 import torch
 import numpy as np
@@ -1963,5 +1963,5 @@ if non_picklable:
 # print(f"✅ Saved {len(picklable)} variables → {output_path}")
 # print(f"⚠️ Could not serialize {len(non_picklable)} variables:", non_picklable)
 
-!ls -lh "/content/NNN_vars_3.pkl"
+#!ls -lh "/content/NNN_vars_3.pkl"
 
