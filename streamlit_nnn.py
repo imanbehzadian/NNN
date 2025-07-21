@@ -144,6 +144,20 @@ elif page == "Data & Model Info":
                 for name, obj in workspace.items():
                     globals()[name] = obj
                 st.session_state.model_obj = workspace.get('model_obj')
+
+                # stash under Model‑Performance‑specific keys
+                st.session_state['mp_model']        = workspace.get('model_obj')      # your trained model
+                st.session_state['mp_N_GEOS']       = workspace.get('N_GEOS')
+                st.session_state['mp_TIME_STEPS']   = workspace.get('TIME_STEPS')
+                st.session_state['mp_NUM_CHANNELS'] = workspace.get('NUM_CHANNELS')
+                st.session_state['mp_X_np']         = workspace.get('X_np')
+                st.session_state['mp_Y_np']         = workspace.get('Y_np')
+
+                # only mark “ready” if everything’s present
+                required_mp = ['mp_model','mp_N_GEOS','mp_TIME_STEPS','mp_NUM_CHANNELS','mp_X_np','mp_Y_np']
+                st.session_state['mp_ready'] = all(st.session_state.get(k) is not None for k in required_mp)
+
+
                 msg_ph.success(f"✅ Loaded pretrained variables from {file_name} onto {device}")
             except FileNotFoundError:
                 msg_ph.error(f"❌ File not found: {file_name}")
@@ -280,7 +294,51 @@ elif page == "Training Status":
 
 elif page == "Model Performance":
     st.header("Model Performance")
-    st.write("Actual vs. predicted charts over full dataset.")
+
+    if st.session_state.get('mp_ready', False):
+        # pull out your page‑specific vars
+        model    = st.session_state['mp_model']
+        N        = st.session_state['mp_N_GEOS']
+        T        = st.session_state['mp_TIME_STEPS']
+        C        = st.session_state['mp_NUM_CHANNELS']
+        X_np     = st.session_state['mp_X_np']
+        Y_np     = st.session_state['mp_Y_np']
+
+        model.eval()
+        import numpy as np
+        import matplotlib.pyplot as plt
+        DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        geo_idx = torch.arange(N, device=DEVICE)
+
+        Xf = torch.tensor(X_np, dtype=torch.float32, device=DEVICE)
+        Xb = Xf.clone(); Xb[..., :C, :] = 0.0
+
+        with torch.no_grad():
+            full = model(Xf, geo_idx).cpu().numpy()
+            base = model(Xb, geo_idx).cpu().numpy()
+
+        sales_full   = np.expm1(full[..., 0]).sum(axis=0)
+        sales_base   = np.expm1(base[..., 0]).sum(axis=0)
+        sales_actual = np.expm1(Y_np[..., 0]).sum(axis=0)
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(sales_actual, label="Actual",      linewidth=2)
+        ax.plot(sales_full,   label="Predicted",   linewidth=2)
+        ax.plot(sales_base,   label="No‑Media BL", linestyle="--", linewidth=2)
+        ax.set_title("Weekly Sales: Actual vs Predicted", fontsize=16)
+        ax.set_xlabel("Week", fontsize=14)
+        ax.set_ylabel("Sales", fontsize=14)
+        ax.legend(frameon=True, fontsize=12)
+        ax.grid(True, linestyle="--", alpha=0.5)
+        fig.tight_layout()
+        st.pyplot(fig)
+
+    else:
+        st.info(
+            "✅ First go to Data & Model Info, tick “Use simulated data” and click Go "
+            "to load the pretrained model before viewing performance."
+        )
+
 
 # --- Page: Channel Attribution ---
 elif page == "Channel Attribution":

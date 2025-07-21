@@ -1050,7 +1050,7 @@ def permutation_importance(
 # Compute importances for all channels at geo=3, week=10
 importances = []
 for j in range(NUM_CHANNELS):
-    imp = permutation_importance(model, X, None, geo_idx=3, time_step=10, channel_idx=j)
+    imp = permutation_importance(model, X, None, geo_idx=1, time_step=10, channel_idx=j)
     importances.append(imp)
 
 # Plot
@@ -1063,7 +1063,7 @@ plt.show()
 
 """# Actionable Insights on Creative Pieces"""
 
-#!pip install captum
+!pip install captum
 
 import torch
 import numpy as np
@@ -1610,7 +1610,7 @@ display(html_anim)
 
 """# Save Workspace"""
 
-to_save = [
+model_vars = [
     'ALPHA',
     'BATCH_SIZE',
     'BertModel',
@@ -1901,6 +1901,102 @@ to_save = [
     'yaml',
 ]
 
+plot_vars_model_performance = [
+    'model_obj',
+    'mp_N_GEOS',
+    'mp_TIME_STEPS',
+    'mp_NUM_CHANNELS',
+    'mp_X_np',
+    'mp_Y_np',
+]
+
+plot_vars_creative_scenarios = [
+    'model_obj',
+    'cs_best_wts',
+    'cs_N_GEOS',
+    'cs_TIME_STEPS',
+    'cs_NUM_CHANNELS',
+    'cs_X',
+    'cs_creative_embeddings',
+    'cs_id_worst',
+    'cs_id_best',
+    'cs_pred_total_sales',
+]
+
+plot_vars_scenario_planner = [
+    'model_obj',
+    'sp_X',
+    'sp_DEVICE',
+    'sp_N_GEOS',
+    'sp_TIME_STEPS',
+    'sp_NUM_CHANNELS',
+    'sp_MEDIA_CHANNELS',
+]
+
+plot_vars_creative_scenario_planner = [
+    'model_obj',
+    'csp_X',
+    'csp_DEVICE',
+    'csp_tokeniser',
+]
+
+plot_vars_attribution = [
+    'model_obj',
+    'attr_X',
+    'attr_NUM_CHANNELS',
+    'attr_DEVICE',
+    'attr_MEDIA_CHANNELS',
+]
+
+plot_vars_insights_on_creatives = [
+    'model_obj',
+    'ioc_X',
+    'ioc_DEVICE',
+    'ioc_E_np',
+    'ioc_tokenizer',
+    'ioc_token2id',
+    'ioc_messages',
+]
+
+plot_vars_impulse_response = [
+    'model_obj',
+    'ir_X',
+    'ir_media_spend',
+    'ir_DEVICE',
+    'ir_MEDIA_CHANNELS',
+]
+
+plot_vars_impulse_response_animated = [
+    'model_obj',
+    'ira_X',
+    'ira_media_spend',
+    'ira_DEVICE',
+    'ira_MEDIA_CHANNELS',
+    'ira_EMBED_DIM',
+]
+
+# Combine all into a single unique list
+plot_vars = []
+for lst in [
+    plot_vars_model_performance,
+    plot_vars_creative_scenarios,
+    plot_vars_scenario_planner,
+    plot_vars_creative_scenario_planner,
+    plot_vars_attribution,
+    plot_vars_insights_on_creatives,
+    plot_vars_impulse_response,
+    plot_vars_impulse_response_animated,
+]:
+    for var in lst:
+        if var not in plot_vars:
+            plot_vars.append(var)
+
+# Now `plot_vars` holds the deduplicated union of all plot_vars_* lists.
+
+# Combine plot_vars and model_vars into one unique list, preserving order
+to_save = list(dict.fromkeys(plot_vars + model_vars))
+to_save
+
 # #if we want to store to here with Torh
 import pickle
 import torch
@@ -1963,5 +2059,5 @@ if non_picklable:
 # print(f"✅ Saved {len(picklable)} variables → {output_path}")
 # print(f"⚠️ Could not serialize {len(non_picklable)} variables:", non_picklable)
 
-#!ls -lh "/content/NNN_vars_3.pkl"
+!ls -lh "/content/NNN_vars_3.pkl"
 
