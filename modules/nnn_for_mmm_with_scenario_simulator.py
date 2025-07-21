@@ -1611,368 +1611,133 @@ display(html_anim)
 """# Save Workspace"""
 
 model_vars = [
-    'ALPHA',
-    'BATCH_SIZE',
-    'BertModel',
-    'BertTokenizer',
-    'CHANNEL_COUNT_INPUT',
-    'C_in',
-    'C',
-    'DEVICE',
-    'Dataset',
-    'DataLoader',
-    'DROPOUT',
-    'E_np',
-    'EMBED_DIM',
-    'F',
-    'FuncAnimation',
-    'GEOS',
-    'GeoTimeSeriesDataset',
-    'GRAD_NOISE_STD',
-    'GRUCell',
-    'HIDDEN_CHANNELS',
-    'HTML',
-    'IDX',
-    'IN_CHANNELS',
-    'IntegratedGradients',
-    'LAYERS',
-    'L1_LAMBDA',
-    'LEARNING_RATE',
-    'LOGGING',
-    'LOOKBACK_WINDOW',
-    'MAX_GRAD_NORM',
-    'MEDIA_CHANNELS',
-    'MODEL_PATH',
-    'NEG_INF',
-    'N_GEOS',
-    'NUM_EPOCHS',
-    'OPTIMIZER',
-    'P',
-    'PERIODS',
-    'SCENARIO',
-    'SIMULATOR',
-    'SLIDING_WINDOW',
-    'STATE_DIM',
-    'TAG',
-    'TARGET',
-    'TEST_SIZE',
-    'TRAIN_SIZE',
-    'TS',
-    'TYPE',
-    'USE_SIMULATED',
-    'W',
-    'WEIGHT_DECAY',
-    'X_np',
-    'Y_np',
-    '_',
-    'args',
-    'batch_idx',
-    'batch_samples',
-    'batches_per_epoch',
-    'beta',
-    'bkg',
-    'bkg_color',
-    'bkg_img',
-    'bkg_norm',
-    'bkg_rgb',
-    'bias',
-    'bids',
-    'blobs',
-    'bs',
-    'c',
-    'camera',
-    'cell',
-    'chi2',
-    'choice',
-    'chunk',
-    'col',
-    'col_data',
-    'colnames',
-    'cols',
-    'component',
-    'config',
-    'confs',
-    'conn',
-    'contents',
-    'count',
-    'counts',
-    'cpu',
-    'cpu0',
-    'cpu1',
-    'cr',
-    'crs',
-    'data',
-    'data_dict',
-    'data_np',
-    'data_ts',
-    'date',
-    'dates',
-    'db',
-    'dc',
-    'dec',
-    'decoder',
-    'device',
-    'diff',
-    'dims',
-    'din',
-    'dirpath',
-    'dl',
-    'dload',
-    'epoch',
-    'epochs',
-    'eval',
-    'eval_dataset',
-    'eval_loader',
-    'exp',
-    'existing',
-    'f',
-    'feature',
-    'fig',
-    'figs',
-    'file',
-    'files',
-    'filter_func',
-    'fin',
-    'fp',
-    'fpath',
-    'freq',
-    'frq',
-    'g',
-    'gamma',
-    'geos',
-    'get_args',
-    'get_data',
-    'get_device',
-    'get_model',
-    'get_simulator',
-    'get_ts',
-    'get_weeks',
-    'gg',
-    'glob',
-    'grad',
-    'gradients',
-    'h',
-    'head',
-    'hist',
-    'i',
-    'ica',
-    'id_',
-    'ids',
-    'img',
-    'images',
-    'in_dim',
-    'input_dim',
-    'input_size',
-    'inp',
-    'interval',
-    'j',
-    'k',
-    'kargs',
-    'key',
-    'keys',
-    'l',
-    'lam',
-    'layer',
-    'layers',
-    'len_args',
-    'len_data',
-    'len_ts',
-    'lext',
-    'loss',
-    'lr',
-    'm',
-    'mask',
-    'max_val',
-    'mean',
-    'median',
-    'model',
-    'model_args',
-    'model_cls',
-    'model_fn',
-    'model_kwargs',
-    'models',
-    'mse',
-    'mu',
-    'n',
-    'name',
-    'nb',
-    'ndim',
-    'next_state',
-    'np',
-    'num_batches',
-    'num_features',
-    'num_hidden',
-    'num_layers',
-    'num_samples',
-    'o',
-    'obj',
-    'optimizer',
-    'orig',
-    'out',
-    'p',
-    'path',
-    'paths',
-    'perf',
-    'plot_data',
-    'plt',
-    'price',
-    'probs',
-    'q',
-    'qp',
-    'r',
-    'rand',
-    'randn',
-    'rate',
-    'rbf',
-    'replay_buffer',
-    'rng',
-    'row',
-    's',
-    'sampler',
-    'sample',
-    'scaler',
-    'scheduler',
-    'scores',
-    'seed',
-    'sem',
-    'set_args',
-    'set_data',
-    'set_device',
-    'set_seed',
-    'set_simulator',
-    'sig',
-    'sigmoid',
-    'sim',
-    'sim_data',
-    'simulated',
-    'simulator',
-    'size',
-    'skip',
-    'state',
-    'std',
-    'step',
-    'steps',
-    'sub',
-    'subfiles',
-    'subplot',
-    'sum',
-    'support',
-    't',
-    'tag',
-    'tags',
-    'tf',
-    'time_idx',
-    'times',
-    'timesteps',
-    'to_save',
-    'torch',
-    'train_dataset',
-    'train_end',
-    'train_loader',
-    'train_losses',
-    'train_simulator',
-    'train_start',
-    'train_ts',
-    'train_weeks',
-    'trange',
-    'u',
-    'update',
-    'upper',
-    'use_cuda',
-    'use_sim',
-    'v',
-    'var',
-    'vals',
-    'verbose',
-    'version',
-    'w',
-    'weights',
-    'weeks',
-    'writer',
-    'x',
-    'xb',
-    'xc',
-    'xhat',
-    'xnp',
-    'xs',
-    'y',
-    'yb',
-    'yf',
-    'yaml',
+    # Trained model & its best weights
+    "model",
+    "best_wts",
+    "best_epoch",
+    "best_sales_r2",
+
+    # Simulation & data constants
+    "N_GEOS",
+    "TIME_STEPS",
+    "MEDIA_CHANNELS",
+    "NUM_CHANNELS",
+    "EMBED_DIM",
+    "DEVICE",
+
+    # Hyperparameters
+    "NUM_EPOCHS",
+    "BATCH_SIZE",
+    "ALPHA",
+    "L1_LAMBDA",
+    "GRAD_NOISE_STD",
+    "MAX_GRAD_NORM",
+    "N_HEADS",
+    "N_LAYERS",
+    "DROPOUT",
+    "HIDDEN_CHANNELS",
+    "LOOKBACK_WINDOW",
+    "LEARNING_RATE",
+
+    # Generated data
+    "creative_embeddings",
+    "baseline_search",
+    "media_spend",
+    "total_search",
+    "sales",
+    "X",
+    "Y",
+
+    # Weekly‐sales / creative mapping
+    "weekly_sales",
+    "messages",
+    "id_best",
+    "id_worst",
+
+    # BERT embedding pipeline
+    "tokenizer",
+    "bert_model",
+    "layer_norm",
+    "project256",
+    "global_mean",
+    "global_std",
+    "tokeniser",
 ]
 
+model_vars
+
 plot_vars_model_performance = [
-    'model_obj',
-    'mp_N_GEOS',
-    'mp_TIME_STEPS',
-    'mp_NUM_CHANNELS',
-    'mp_X_np',
-    'mp_Y_np',
+    'model',
+    'N_GEOS',
+    'TIME_STEPS',
+    'NUM_CHANNELS',
+    'X_np',
+    'Y_np',
 ]
 
 plot_vars_creative_scenarios = [
-    'model_obj',
-    'cs_best_wts',
-    'cs_N_GEOS',
-    'cs_TIME_STEPS',
-    'cs_NUM_CHANNELS',
-    'cs_X',
-    'cs_creative_embeddings',
-    'cs_id_worst',
-    'cs_id_best',
-    'cs_pred_total_sales',
+    'model',
+    'best_wts',
+    'N_GEOS',
+    'TIME_STEPS',
+    'NUM_CHANNELS',
+    'X',
+    'creative_embeddings',
+    'id_worst',
+    'id_best',
+    'pred_total_sales',
 ]
 
 plot_vars_scenario_planner = [
-    'model_obj',
-    'sp_X',
-    'sp_DEVICE',
-    'sp_N_GEOS',
-    'sp_TIME_STEPS',
-    'sp_NUM_CHANNELS',
-    'sp_MEDIA_CHANNELS',
+    'model',
+    'X',
+    'DEVICE',
+    'N_GEOS',
+    'TIME_STEPS',
+    'NUM_CHANNELS',
+    'MEDIA_CHANNELS',
 ]
 
 plot_vars_creative_scenario_planner = [
-    'model_obj',
-    'csp_X',
-    'csp_DEVICE',
-    'csp_tokeniser',
+    'model',
+    'X',
+    'DEVICE',
+    'tokeniser',
 ]
 
 plot_vars_attribution = [
-    'model_obj',
-    'attr_X',
-    'attr_NUM_CHANNELS',
-    'attr_DEVICE',
-    'attr_MEDIA_CHANNELS',
+    'model',
+    'X',
+    'NUM_CHANNELS',
+    'DEVICE',
+    'MEDIA_CHANNELS',
 ]
 
 plot_vars_insights_on_creatives = [
-    'model_obj',
-    'ioc_X',
-    'ioc_DEVICE',
-    'ioc_E_np',
-    'ioc_tokenizer',
-    'ioc_token2id',
-    'ioc_messages',
+    'model',
+    'X',
+    'DEVICE',
+    'E_np',
+    'tokenizer',
+    'token2id',
+    'messages',
 ]
 
 plot_vars_impulse_response = [
-    'model_obj',
-    'ir_X',
-    'ir_media_spend',
-    'ir_DEVICE',
-    'ir_MEDIA_CHANNELS',
+    'model',
+    'X',
+    'media_spend',
+    'DEVICE',
+    'MEDIA_CHANNELS',
 ]
 
 plot_vars_impulse_response_animated = [
-    'model_obj',
-    'ira_X',
-    'ira_media_spend',
-    'ira_DEVICE',
-    'ira_MEDIA_CHANNELS',
-    'ira_EMBED_DIM',
+    'model',
+    'X',
+    'media_spend',
+    'DEVICE',
+    'MEDIA_CHANNELS',
+    'EMBED_DIM',
 ]
 
 # Combine all into a single unique list
@@ -1995,69 +1760,66 @@ for lst in [
 
 # Combine plot_vars and model_vars into one unique list, preserving order
 to_save = list(dict.fromkeys(plot_vars + model_vars))
-to_save
+len(to_save)
 
-# #if we want to store to here with Torh
 import pickle
 import torch
 
 # 1) Define the local filename
 output_path = 'NNN_vars_3.pkl'
 
-# 2) From your `to_save` list, test which globals() entries pickle cleanly
+# 2) Report how many variables we intend to save
+print(f"Plan to save {len(to_save)} variables")
+
+# 3) Filter which names actually exist and are picklable
 picklable = []
 non_picklable = []
 
-for name in to_save:
-    if name in globals():
-        obj = globals()[name]
+for name in to_save: #['bert_model']: # to store only bert to reduce size
+    obj = globals().get(name, None)
+    if obj is None:
+        non_picklable.append(name)      # name wasn’t defined at top level
+    else:
         try:
             pickle.dumps(obj)
             picklable.append(name)
         except Exception:
-            non_picklable.append(name)
+            non_picklable.append(name)  # name existed but couldn’t be pickled
 
-# 3) Build a dict of only the picklable variables from `to_save`
-workspace = {name: globals()[name] for name in picklable}
+# 4) Build and save workspace dict
+workspace = {n: globals()[n] for n in picklable}
+#workspace.pop('bert_model', None) # if you want to skip bert to reduce size
 
-# 4) Save with torch.save so you can later torch.load with map_location
 torch.save(workspace, output_path)
 
-# 5) Report
+# 5) Report results
 print(f"✅ Saved {len(picklable)} variables → {output_path}")
 if non_picklable:
-    print(f"⚠️ Could not serialize {len(non_picklable)} variables: {non_picklable}")
-
-#if we want to store to the drive with dill
-# from google.colab import drive
-# import dill
-
-# # 1) Mount Google Drive
-# drive.mount('/content/drive')
-
-# # 2) Define output path on Drive
-# output_path = '/content/drive/MyDrive/NNN_vars.pkl'
-
-# # 3) Collect picklable vs non‑picklable names
-# picklable = []
-# non_picklable = []
-
-# for name in to_save:
-#     if name in globals():
-#         obj = globals()[name]
-#         try:
-#             dill.dumps(obj)
-#             picklable.append(name)
-#         except Exception:
-#             non_picklable.append(name)
-
-# # 4) Save only picklable vars to Drive
-# with open(output_path, 'wb') as f:
-#     dill.dump({n: globals()[n] for n in picklable}, f)
-
-# # 5) Report
-# print(f"✅ Saved {len(picklable)} variables → {output_path}")
-# print(f"⚠️ Could not serialize {len(non_picklable)} variables:", non_picklable)
+    print(f"⚠️ Skipped {len(non_picklable)} variables: {non_picklable}")
 
 !ls -lh "/content/NNN_vars_3.pkl"
+
+import pickle
+
+# assume `workspace` is your dict of name→object that you saved
+sizes = {}
+
+for name, obj in workspace.items():
+    # 1) serialized size
+    try:
+        buf = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+        ser_size = len(buf)
+    except Exception:
+        ser_size = None
+
+    # 2) if it’s a numpy array, record its raw nbytes
+    np_size = getattr(obj, 'nbytes', None)
+
+    sizes[name] = (ser_size, np_size)
+
+# sort by serialized size descending
+for name, (ser, npb) in sorted(sizes.items(), key=lambda kv: kv[1][0] or 0, reverse=True):
+    mb = (ser or 0) / 1e6
+    extra = f", np.nbytes={npb/1e6:.1f} MB" if npb is not None else ""
+    print(f"{name:30s}: {mb:6.1f} MB serialized{extra}")
 
