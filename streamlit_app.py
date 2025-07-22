@@ -43,15 +43,15 @@ if not st.session_state.authenticated:
     st.stop()
 
 # 3) Page imports
-from pages.overview             import render as render_overview
-from pages.data_model_info      import render as render_data_model_info
-from pages.training_status      import render as render_training_status
-from pages.model_performance    import render as render_model_performance
-from pages.channel_attribution  import render as render_channel_attribution
-from pages.impulse_response     import render as render_impulse_response
-from pages.actionable_insights  import render as render_actionable_insights
-from pages.scenario_planner     import render as render_scenario_planner
-from pages.creative_simulator   import render as render_creative_simulator
+from pages_app.overview             import render as render_overview
+from pages_app.data_model_info      import render as render_data_model_info
+from pages_app.training_status      import render as render_training_status
+from pages_app.model_performance    import render as render_model_performance
+from pages_app.channel_attribution  import render as render_channel_attribution
+from pages_app.impulse_response     import render as render_impulse_response
+from pages_app.actionable_insights  import render as render_actionable_insights
+from pages_app.scenario_planner     import render as render_scenario_planner
+from pages_app.creative_simulator   import render as render_creative_simulator
 
 PAGES = {
     "Overview":              render_overview,

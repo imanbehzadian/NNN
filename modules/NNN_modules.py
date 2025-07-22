@@ -6,16 +6,16 @@ import torch
 import pandas as pd
 
 # Constants
-N_GEOS = 47
-TIME_STEPS = 104  # Number of weeks (2 years)
-N_HEADS = 4
+N_HEADS = 4 #TODO to delete them to come from hyperparameters
 N_LAYERS = 2
 DROPOUT = 0.1
 HIDDEN_CHANNELS = 64
 LOOKBACK_WINDOW = 52
-DEVICE       = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 EMBED_DIM    = 256                            # your embedding dimension
+N_GEOS = 47 #TODO to delete them to come from input data
+TIME_STEPS = 104  # Number of weeks (2 years)
 MEDIA_CHANNELS = ["TV","Radio","Search","Display"]  # your channel names
+DEVICE       = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class NNNModel(nn.Module):
     def __init__(
@@ -196,78 +196,6 @@ def tokeniser(texts: list[str]) -> np.ndarray:
     return (emb_raw - global_mean) / global_std       # normalize per-dimension
 
 
-def scenario_planner_per_channel(
-    model,
-    X,
-    channel_multipliers: list,
-    geo_idx: int = None,
-    time_step: int = None,
-    device: torch.device = DEVICE,
-):
-    """
-    Simulate “what-if” scenarios by scaling each media channel separately,
-    optionally for a single time step or for all time steps.
 
-    Args:
-      model               : trained NNNModel (in eval mode, on `device`)
-      X                   : np.ndarray or torch.Tensor, shape (N_GEOS, T, C_in, D)
-      channel_multipliers : list of length NUM_CHANNELS, one multiplier per channel
-      geo_idx             : int or None → simulate only that geo, or all if None
-      time_step           : int or None → if None apply to all weeks, else only to that week index
-      device              : torch.device
 
-    Returns:
-      DataFrame with columns [
-        "geo_idx",
-        "time_step",
-        "multipliers",
-        "total_sales",
-        "avg_search"
-      ]
-    """
-    model.eval()
-    # ensure tensor on correct device
-    if not isinstance(X, torch.Tensor):
-        X_t = torch.tensor(X, dtype=torch.float32, device=device)
-    else:
-        X_t = X.to(device)
 
-    # validate channel multipliers
-    assert len(channel_multipliers) == NUM_CHANNELS, (
-        f"Need {NUM_CHANNELS} multipliers, got {len(channel_multipliers)}"
-    )
-
-    # decide which geos to simulate
-    geos = [geo_idx] if geo_idx is not None else list(range(X_t.shape[0]))
-    results = []
-
-    for g in geos:
-        # extract & clone base input for this geo
-        X_base = X_t[g : g + 1].clone()  # (1, T, C_in, D)
-
-        # apply multipliers
-        if time_step is None:
-            # scale each channel across all time steps
-            for j, m in enumerate(channel_multipliers):
-                X_base[:, :, j, :] *= m
-        else:
-            # scale only the specified week
-            t = time_step
-            for j, m in enumerate(channel_multipliers):
-                X_base[:, t, j, :] *= m
-
-        # forward pass
-        with torch.no_grad():
-            Y_pred = model(X_base, torch.tensor([g], device=device))
-            total_sales = torch.expm1(Y_pred[..., 0]).sum().item()
-            avg_search   = torch.expm1(Y_pred[..., 1]).mean().item()
-
-        results.append({
-            "geo_idx":      g,
-            "time_step":    time_step if time_step is not None else "all",
-            "multipliers":  channel_multipliers.copy(),
-            "total_sales":  total_sales,
-            "avg_search":   avg_search
-        })
-
-    return pd.DataFrame(results)

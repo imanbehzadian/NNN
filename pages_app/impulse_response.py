@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-#from modules.NNN_modules import impulse_response_analysis
+from modules.utils import impulse_response_analysis
 
 def render():
     st.header("Impulse‑Response Analysis")

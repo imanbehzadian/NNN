@@ -3,7 +3,7 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-from modules.NNN_modules import scenario_planner_per_channel
+from modules.utils import scenario_planner_per_channel
 
 def render():
     st.header("Channel Attribution")
@@ -27,6 +27,7 @@ def render():
                 geo_idx=geo_idx,
                 time_step=time_step,
                 device=DEVICE,
+                Num_channels=NUM_CHANNELS,
             )
             base_sales = df_base["total_sales"].iat[0]
 
@@ -42,15 +43,29 @@ def render():
                 geo_idx=geo_idx,
                 time_step=time_step,
                 device=DEVICE,
+                Num_channels=NUM_CHANNELS,
             )
             perm_sales = df_perm["total_sales"].iat[0]
 
             # importance = drop in sales
-            return base_sales - perm_sales
+            return (base_sales - perm_sales)
 
         # Let user choose geo and week
-        geo_idx   = st.number_input("Geo index", min_value=0, max_value=NUM_CHANNELS-1, value=0, step=1)
-        time_step = st.number_input("Week index", min_value=0, max_value=st.session_state['attr_X'].shape[1]-1, value=0, step=1)
+        max_geo   = st.session_state['attr_X'].shape[0] - 1
+        max_week  = st.session_state['attr_X'].shape[1] - 1
+
+        geo_selection = st.slider("Select Geo(s)", 0, max_geo, value=(0, 10), step=1)
+        if isinstance(geo_selection, int):
+            geo_idx = [geo_selection]
+        else:
+            geo_idx = list(range(geo_selection[0], geo_selection[1] + 1))
+
+        week_selection = st.slider("Select Week(s)", 0, max_week, value=(0, 13), step=1)
+        if isinstance(week_selection, int):
+            time_step = [week_selection]
+        else:
+            time_step = list(range(week_selection[0], week_selection[1] + 1))
+
 
         # Compute importances
         importances = [
@@ -63,8 +78,8 @@ def render():
         ax.bar(MEDIA_CHANNELS, importances)
         ax.set_xticks(range(len(MEDIA_CHANNELS)))
         ax.set_xticklabels(MEDIA_CHANNELS, rotation=45, ha='right')
-        ax.set_ylabel("Δ Sales when permuted")
-        ax.set_title(f"Permutation Importance: Geo {geo_idx}, Week {time_step}")
+        ax.set_ylabel("Attributed Sales ($m)")
+        ax.set_title(f"Channel Attribution The Given Geo Locations and Weeks")
         ax.grid(axis='y', linestyle='--', alpha=0.5)
         fig.tight_layout()
 

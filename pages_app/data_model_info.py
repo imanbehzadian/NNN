@@ -21,7 +21,7 @@ def render():
 
     if go:
         if use_sim:
-            file_name = "simulation_data/NNN_vars_3.pkl"
+            file_name = "simulation_data/NNN_vars_noBert.pkl" #"simulation_data/NNN_vars_3.pkl"
             device = st.session_state['DEVICE']
             try:
                 # now torch.load can resolve your custom classes via sys.modules['main']

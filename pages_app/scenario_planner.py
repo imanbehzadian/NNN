@@ -2,7 +2,7 @@
 
 import streamlit as st
 import torch
-from modules.NNN_modules import scenario_planner_per_channel
+from modules.utils import scenario_planner_per_channel
 
 def render():
     st.header("Scenario Planner")
