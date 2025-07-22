@@ -15,143 +15,68 @@ MEDIA_CHANNELS = ["TV","Radio","Search","Display"]  # your channel names
 DEVICE       = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Function: impulse response analysis with flexible inputs
-def impulse_response_analysis(
-    model,
-    X: np.ndarray,
-    media_spend: np.ndarray,
-    std_multiplier: float = 1.0,
-    raw_increase: float = None,
-    channel_idx: int = None,
-    time_step: int = None,
-    geo_idx: int = None,
-    device: torch.device = DEVICE,
-    media_channels: list = MEDIA_CHANNELS
-):
-    """
-    Flexible impulse-response: bump spend by std or raw, plot %Δ sales.
+def impulse_response_analysis(model, X_t, media_spend, std_rg=None, raw_increase=None,
+                              std_multiplier=1.0, channel_idx=None, geos=None, t=0,
+                              D=16, eps=1e-8, device=None, media_channels=None, weeks=None):
 
-    Args:
-      model         : trained NNNModel (eval mode)
-      X             : array, shape (G, T, C_in, D)
-      media_spend   : array, shape (G, T, C)
-      std_multiplier: number of σ to add (unless raw_increase provided)
-      raw_increase  : direct spend addition (mutually exclusive with std_multiplier)
-      channel_idx   : int or None → which channel (None=all)
-      time_step     : int or None → which week (None=0)
-      geo_idx       : int or None → which geo (None=all)
-      device        : torch.device
-
-    Returns:
-      dict mapping channel→delta_pct array of shape (T,)
-    """
-    # Check exclusivity
-    if (raw_increase is not None) and (std_multiplier is not None and std_multiplier != 1.0):
-        raise ValueError("Specify either raw_increase or std_multiplier, not both.")
-
-    # Prepare tensors
-    X_t = torch.tensor(X, dtype=torch.float32, device=device)
-    G, T, C_in, D = X_t.shape
-    full_geo_ids = torch.arange(G, device=device)
-    model.eval()
-    eps = 1e-9
-
-    # Baseline sales
-    with torch.no_grad():
-        Yb = model(X_t, full_geo_ids)
-    sales_base = torch.expm1(Yb[..., 0]).cpu().numpy()
-
-    # Compute std devs of raw spend
-    std_rg = np.std(media_spend, axis=1)
-
-    # Determine indices
-    geos = [geo_idx] if geo_idx is not None else list(range(G))
-    channels = [channel_idx] if channel_idx is not None else list(range(media_spend.shape[2]))
-    t = time_step if time_step is not None else 0
-
-    # Plot setup
-    n = len(channels)
-    rows = int(np.ceil(n/2))
-    cols = min(2, n)
-    fig, axes = plt.subplots(rows, cols, figsize=(14, 5*rows), sharex=True)
-    axes = np.array(axes).reshape(-1)
-    # Define x-axis range from injection time t to t+12 (inclusive)
-    start = t
-    end = min(T, t + 13)
-    weeks = np.arange(start, end)  # plot from week t to t+12
+    X_t = torch.tensor(X_t, device=device)
+    N, T, C, _ = X_t.shape
+    _, T, C_media = media_spend.shape
+    if geos is None:
+        geos = list(range(N))
+    if media_channels is None:
+        media_channels = [f"Channel {i}" for i in range(C)]
+    if weeks is None:
+        weeks = list(range(t, T))
 
     delta_pct_dict = {}
+    plot_data = []
 
-    # Impulse-response per channel
-    for idx, j in enumerate(channels):
-        ax = axes[idx]
+    with torch.no_grad():
+        Y_base = model(X_t, torch.tensor(geos, device=device))
+    sales_base = torch.expm1(Y_base[..., 0]).cpu().numpy()
+
+    for j in range(C_media):
         X_scen = X_t.clone()
 
-        # Apply bump per geo
         for g in geos:
             base = media_spend[g, t, j]
-            if raw_increase is not None:
-                inc = raw_increase
-            else:
-                inc = std_rg[g, j] * std_multiplier
+            inc = raw_increase if raw_increase is not None else std_rg[g, j] * std_multiplier
             s_prime = base + inc
-            # rebuild embedding vector
-            v_val = torch.log1p(torch.tensor(s_prime, device=device))  # scalar tensor
-            V = v_val.repeat(D)                                       # (D,)
+
+            D = X_t.shape[-1]  # ensures alignment
+            v_val = torch.log1p(torch.tensor(s_prime, device=device)).unsqueeze(0)  # shape [1]
+            V = v_val.expand(D)  # now [D], not [D * D]
             norm = torch.norm(V)
-            E = (V / (norm + eps)) * torch.log1p(norm)               # (D,)
+            E = (V / (norm + eps)) * torch.log1p(norm)
             X_scen[g, t, j, :] = E
 
-        # Predict scenario
-        with torch.no_grad():
-            Yi = model(X_scen, full_geo_ids)
-        sales_imp = torch.expm1(Yi[..., 0]).cpu().numpy()
 
-        # Aggregate & compute percentage delta
+
+        with torch.no_grad():
+            Y_imp = model(X_scen, torch.tensor(geos, device=device))
+        sales_imp = torch.expm1(Y_imp[..., 0]).cpu().numpy()
+
         total_base = sales_base.sum(axis=0)
         total_imp = sales_imp.sum(axis=0)
         delta = total_imp - total_base
         delta_pct = (delta / (total_base + eps)) * 100
+
         delta_pct_dict[j] = delta_pct
 
-        # Plot
-        ax.plot(weeks, delta_pct[start:end], marker='o')  # plot Δ% sales from t to t+12
-        title = media_channels[j] if channel_idx is None else f"Channel {channel_idx}"
-        ax.set_title(f"Impulse response of the channel: {title}")
-        ax.set_xlabel("Week")
-        ax.set_ylabel("Δ Sales (%)")
-        ax.grid(True)
+        plot_data.append({
+            "channel": media_channels[j],
+            "weeks": weeks,
+            "delta_pct": delta_pct.tolist(),
+            "label": (
+                f"Added raw +{raw_increase:.2f}" if raw_increase is not None else f"Added {std_multiplier:.1f}σ"
+            ),
+            "summary_3w": delta_pct[t:t+3].sum(),
+            "summary_13w": delta_pct[t:t+13].sum(),
+        })
 
-        # Annotation position based on first value
-        first_val = delta_pct[0]
-        if first_val < 0:
-            xpos, ypos, va, ha = 0.98, 0.02, 'bottom', 'right'
-        else:
-            xpos, ypos, va, ha = 0.98, 0.98, 'top', 'right'
-        # Summary text
-        label = f"Added raw +{raw_increase:.2f}" if raw_increase is not None else f"Added {std_multiplier:.1f}σ"
-        # cumulative percentage change over first 3 weeks starting at t
-        dS1 = delta_pct[start:start+3].sum()
-        # cumulative percentage change over first 13 weeks starting at t
-        dS2 = delta_pct[start:end].sum()
-        # annotation text showing ranges relative to injection time t
-        txt = (
-            f"{label} at t={t}\n"
-            f"Δ% Sales ({t}–{t+2}): {dS1:.1f}%\n"
-            f"Δ% Sales ({t}–{end-1}): {dS2:.1f}%: {dS1:.1f}%\n"
-            f"Δ% Sales (0–{len(weeks)-1}): {dS2:.1f}%"
-        )
-        ax.text(xpos, ypos, txt,
-                transform=ax.transAxes, fontsize=9,
-                va=va, ha=ha,
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray", alpha=0.8)
-        )
+    return delta_pct_dict, plot_data
 
-
-    plt.suptitle("Impulse Response Analysis", y=1.02)
-    plt.tight_layout(rect=[0,0,1,0.96])
-    plt.show()
-
-    return delta_pct_dict
 
 
 
