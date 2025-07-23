@@ -3,6 +3,7 @@ import pandas as pd
 import torch
 import matplotlib.pyplot as plt
 
+
 N_HEADS = 4 #TODO to delete them to come from hyperparameters
 N_LAYERS = 2
 DROPOUT = 0.1
@@ -77,10 +78,8 @@ def impulse_response_analysis(model, X_t, media_spend, std_rg=None, raw_increase
 
     return delta_pct_dict, plot_data
 
-
-
-
 def scenario_planner_per_channel(
+        
     model,
     X,
     channel_multipliers: list,
@@ -163,4 +162,67 @@ def scenario_planner_per_channel(
             "avg_search": avg_search
         })
 
+    return pd.DataFrame(results)
+
+def plot_overall_multiplier_impact(model, X, device, multiplier_range=(0.5, 2.5, 0.25)):
+    multipliers = np.arange(multiplier_range[0], multiplier_range[1], multiplier_range[2])
+    results = []
+    
+    base_result = scenario_planner_per_channel(model, X, [1.0] * (X.shape[-2] - 2), device=device)    #TODO Hardcoded to exclude last two channels (e.g., Search and Display) as they are not spend channels
+    base_sales = base_result['total_sales'].sum()
+    
+    # Remove the spend calculation as it's not in the output of scenario_planner_per_channel
+    # base_spend = base_result[['spend_' + str(i) for i in range(X.shape[-1])]].sum().sum()
+    
+    for mult in multipliers:
+        result = scenario_planner_per_channel(
+            model, X, [mult] * (X.shape[-2] - 2), device=device   #TODO Hardcoded to exclude last two channels (e.g., Search and Display) as they are not spend channels
+        )
+        total_sales = result['total_sales'].sum()
+        
+        # Since spend data isn't available, we'll need to modify the metrics
+        results.append({
+            'multiplier': mult,
+            'total_sales': total_sales,
+            'incremental_sales': total_sales - base_sales,
+            # Remove ROI and incremental_spend calculations since we don't have spend data
+        })
+    
+    return pd.DataFrame(results)
+
+def plot_channel_specific_impact(model, X, device, channel_idx, multiplier_range=(0.5, 2.5, 0.2)):
+    multipliers = np.arange(multiplier_range[0], multiplier_range[1], multiplier_range[2])
+    results = []
+    
+    base_result = scenario_planner_per_channel(model, X, [1.0] * (X.shape[-2] - 2), device=device)
+    base_sales = base_result['total_sales'].sum()
+    base_spend = np.sum(X[:, :, :(X.shape[-2]-2), 1])
+    for mult in multipliers:
+
+        channel_mults = [1.0] * (X.shape[-2] - 2)
+        channel_mults[channel_idx] = mult
+        
+        result = scenario_planner_per_channel(
+            model, X, channel_mults, device=device
+        )
+        total_sales = result['total_sales'].sum()
+        total_spend = np.sum(X[:, :, :(X.shape[-2]-2), 1] * channel_mults)
+
+
+        incremental_sales = total_sales - base_sales
+        incremental_spend = total_spend - base_spend
+
+        if abs(incremental_spend) < 0.001:
+            continue
+
+        # Calculate ROI: incremental revenue per incremental dollar spent
+        roi = incremental_sales / incremental_spend if abs(incremental_spend!=0) else 1
+
+        results.append({
+            'multiplier': mult,
+            'total_sales': total_sales,
+            'incremental_sales': incremental_sales,
+            'roi': roi
+        })
+    
     return pd.DataFrame(results)
