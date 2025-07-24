@@ -125,7 +125,7 @@ def render_scenario_planner():
         <div style="font-family: 'Segoe UI', 'Roboto', sans-serif; font-size: 16px; font-weight: 600;
                     color: rgba(80, 80, 80, 0.9); margin: 5px 0;">Marketing ROI</div>
         <div style="font-family: 'Segoe UI', 'Roboto', sans-serif; font-size: 36px; font-weight: 700;
-                    color: rgba(60, 60, 60, 1); margin: 10px 0;">{:.2f}x</div>
+                    color: rgba(60, 60, 60, 1); margin: 10px 0;">{:.2f}<br><span style="font-size: 12px;"> return per dollar </span></div>
         <div style="font-family: 'Segoe UI', 'Roboto', sans-serif; font-size: 13px; font-weight: 500;
                     color: rgba(100, 100, 100, 0.8);">{}</div>
         </div>

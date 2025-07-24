@@ -49,7 +49,7 @@ from pages_app.training_status      import render as render_training_status
 from pages_app.model_performance    import render as render_model_performance
 from pages_app.channel_attribution  import render as render_channel_attribution
 from pages_app.impulse_response     import render as render_impulse_response
-from pages_app.actionable_insights  import render as render_actionable_insights
+from pages_app.investment_simulator  import render as render_investment_simulator
 from pages_app.scenario_planner     import render as render_scenario_planner
 from pages_app.creative_simulator   import render as render_creative_simulator
 
@@ -60,8 +60,8 @@ PAGES = {
     "Model Performance":     render_model_performance,
     "Channel Attribution":   render_channel_attribution,
     "Impulse-Response Analysis": render_impulse_response,
-    "Actionable Insights":   render_actionable_insights,
     "Scenario Planner":      render_scenario_planner,
+    "Investment Simulator":   render_investment_simulator,
     "Creative-Piece Simulator": render_creative_simulator,
 }
 
