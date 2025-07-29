@@ -19,6 +19,7 @@ login_feedback = st.sidebar.empty()
 username      = st.sidebar.text_input('Username', key='username_input')
 password      = st.sidebar.text_input('Password', type='password', key='password_input')
 login_button  = st.sidebar.button('Login')
+st.session_state['use_sim'] = 0
 
 # Initialize any session‐state keys you’ll read later
 for key, default in [

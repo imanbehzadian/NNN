@@ -18,11 +18,14 @@ def render():
     with cols_go[1]:
         go = st.button("Go", key='go_button')
     msg_ph = st.empty()
-
+    st.session_state['use_sim'] = 0
+    
     if go:
         if use_sim:
+            st.session_state['impact_per_dim'] = []
             file_name = "simulation_data/NNN_vars_noBert.pkl" #"simulation_data/NNN_vars_3.pkl"
             device = st.session_state['DEVICE']
+            st.session_state['use_sim'] = use_sim
             try:
                 # now torch.load can resolve your custom classes via sys.modules['main']
                 workspace = torch.load(
@@ -135,13 +138,17 @@ def render():
                 st.session_state['ioc_tokenizer']   = workspace.get('tokenizer')
                 st.session_state['ioc_token2id']    = workspace.get('token2id')
                 st.session_state['ioc_messages']    = workspace.get('messages')
+                st.session_state['ioc_global_mean'] = workspace.get('global_mean')
+                st.session_state['ioc_global_std']  = workspace.get('global_std')
                 required_ioc = [
                     'ioc_X',
                     'ioc_DEVICE',
                     'ioc_E_np',
-                    'ioc_tokenizer',
+                    'ioc_tokeniser',
                     'ioc_token2id',
                     'ioc_messages',
+                    'ioc_global_mean',
+                    'ioc_global_std'
                 ]
                 st.session_state['ioc_ready'] = all(
                     st.session_state.get(k) is not None for k in required_ioc
