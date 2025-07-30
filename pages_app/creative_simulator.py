@@ -3,24 +3,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 from modules.utils import compute_token_recommendations, calculate_creative_impact, creative_simulator
-from transformers import BertTokenizer, BertModel
-
-# msg_ph = st.empty()
-# if st.session_state['use_sim'] and 'bert_model' not in st.session_state:
-#         file_name = "simulation_data/NNN_vars_Bert.pkl"
-#         device = st.session_state['DEVICE']
-#         try:
-
-#             workspace = torch.load(file_name, map_location=device, weights_only=False)
-#             for name, obj in workspace.items():
-#                 globals()[name] = obj
-#             st.session_state['bert_model'] = workspace.get('bert_model')
-#             msg_ph.success(f"✅ Loaded pretrained variables from {file_name} onto {device}")
-
-#         except FileNotFoundError:
-#             msg_ph.error(f"❌ File not found: {file_name}")
-#         except Exception as e:
-#             msg_ph.error(f"❌ Failed to load {file_name}: {e}")
+from transformers import  BertModel
 
 def display_token_recommendations():
     if not all(key in st.session_state for key in [ 'ioc_E_np', 'ioc_tokenizer', 'ioc_token2id', 'ioc_messages']):
@@ -62,6 +45,36 @@ def display_token_recommendations():
     except Exception as e:
         st.error(f"Error computing token recommendations: {str(e)}")
 
+def tokeniser(texts: list[str],global_mean,global_std) -> np.ndarray:
+                    """
+                    texts: list of strings
+                    returns: (len(texts), 256)-array of normalized embeddings
+                    """
+                    DEVICE = st.session_state['ioc_DEVICE']
+                    sequence_length = 50
+                    bert_model  = BertModel.from_pretrained('bert-base-uncased').to(DEVICE).eval()
+                    layer_norm  = nn.LayerNorm(bert_model.config.hidden_size).to(DEVICE)
+                    project256  = nn.Linear(bert_model.config.hidden_size, 256).to(DEVICE)
+                    tokenizer = st.session_state['ioc_tokenizer']
+                    def _embed_batch(texts: list[str]) -> np.ndarray:
+                        DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+                        enc = tokenizer(
+                            texts,
+                            padding='max_length',
+                            truncation=True,
+                            max_length=sequence_length,
+                            return_tensors='pt'
+                        ).to(DEVICE)
+                        with torch.no_grad():
+                            out      = bert_model(**enc)
+                            cls_vec  = out.last_hidden_state[:,0,:]         
+                            normed   = layer_norm(cls_vec)                
+                            emb256   = project256(normed)                   
+                        return emb256.cpu().numpy()
+
+                    emb_raw = _embed_batch(texts)                     # (n,256)
+                    return (emb_raw - global_mean) / global_std           
+
 def render():
     ready = st.session_state.get('csp_ready', False) and st.session_state.get('model_obj') is not None
     if not ready:
@@ -72,7 +85,7 @@ def render():
     st.markdown("This simulator predicts how well your new creative would have performed across different locations and time periods. Select a range of geos and weeks to see the projected performance based on the trained model.")
 
     X = st.session_state['csp_X']
-    DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    DEVICE = st.session_state['ioc_DEVICE']
     model = st.session_state.get('model_obj')
 
     if 'impact_per_dim' not in st.session_state or len(st.session_state.get('impact_per_dim', [])) == 0:
@@ -96,35 +109,7 @@ def render():
     if st.button("Simulate Creative", type="primary"):
         with st.spinner("Running simulation..."):
             try:
-                sequence_length = 50
-                tokenizer   = BertTokenizer.from_pretrained('bert-base-uncased')
-                bert_model  = BertModel.from_pretrained('bert-base-uncased').to(DEVICE).eval()
-                layer_norm  = nn.LayerNorm(bert_model.config.hidden_size).to(DEVICE)
-                project256  = nn.Linear(bert_model.config.hidden_size, 256).to(DEVICE)
-
-                def tokeniser(texts: list[str],global_mean,global_std) -> np.ndarray:
-                    """
-                    texts: list of strings
-                    returns: (len(texts), 256)-array of normalized embeddings
-                    """
-                    def _embed_batch(texts: list[str]) -> np.ndarray:
-                        DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-                        enc = tokenizer(
-                            texts,
-                            padding='max_length',
-                            truncation=True,
-                            max_length=sequence_length,
-                            return_tensors='pt'
-                        ).to(DEVICE)
-                        with torch.no_grad():
-                            out      = bert_model(**enc)
-                            cls_vec  = out.last_hidden_state[:,0,:]         
-                            normed   = layer_norm(cls_vec)                
-                            emb256   = project256(normed)                   
-                        return emb256.cpu().numpy()
-
-                    emb_raw = _embed_batch(texts)                     # (n,256)
-                    return (emb_raw - global_mean) / global_std        
+                                    
                 sim_results = creative_simulator(model=model, X=X, creative_piece=creative_text, tokeniser=tokeniser, geo_idx=None if geo_range[0]<0 else geo_range, time_step=None if time_range[0]<0 else time_range,global_mean =st.session_state['ioc_global_mean'],global_std = st.session_state['ioc_global_std'], device=DEVICE)
                 st.success("Simulation completed!")
                 
